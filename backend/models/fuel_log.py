@@ -3,7 +3,7 @@ Fuel Log Model
 SQLAlchemy model for fuel_logs table
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, func, text, Numeric
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, func, text, Numeric, Computed
 from sqlalchemy.orm import relationship
 from .vehicle import Base
 
@@ -24,8 +24,8 @@ class FuelLog(Base):
     km_driven = Column(Numeric(8, 2), nullable=False)
     fuel_used = Column(Numeric(6, 2), nullable=False)
     
-    # Computed efficiency (generated column in database)
-    fuel_efficiency = Column(Numeric(6, 2))
+    # Computed efficiency (generated column in database - auto-calculated)
+    fuel_efficiency = Column(Numeric(6, 2), Computed("CASE WHEN fuel_used > 0 THEN km_driven / fuel_used ELSE 0 END", persisted=True))
     
     # Anomaly detection fields
     is_anomaly = Column(Boolean, default=False, index=True)

@@ -19,7 +19,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend.services.analyze_fuel import FuelAnalysisService
 from backend.services.alert_system import AlertSystem
-from backend.services.cost_analysis import CostAnalysisService
+from backend.services.cost_analysis import CostAnalyzer
 from backend.services.geospatial_analytics import GeospatialAnalytics
 
 class BusinessIntelligenceReports:
@@ -27,7 +27,7 @@ class BusinessIntelligenceReports:
         self.session = db_session
         self.analysis_service = FuelAnalysisService(db_session)
         self.alert_system = AlertSystem(db_session)
-        self.cost_service = CostAnalysisService(db_session)
+        self.cost_service = CostAnalyzer(db_session)
         self.geo_service = GeospatialAnalytics(db_session)
         
         # Set up styling for charts

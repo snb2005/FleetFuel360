@@ -25,7 +25,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from backend.config import Config
 from backend.services.analyze_fuel import FuelAnalysisService
 from backend.services.alert_system import AlertSystem
-from backend.services.cost_analysis import CostAnalysisService
+from backend.services.cost_analysis import CostAnalyzer
 from backend.services.demo_data_generator import DemoDataGenerator
 from backend.services.bi_reports import BusinessIntelligenceReports
 
@@ -249,7 +249,7 @@ def costs(ctx, days, export):
         return
     
     try:
-        cost_service = CostAnalysisService(cli_obj.db_session)
+        cost_service = CostAnalyzer(cli_obj.db_session)
         
         # Get comprehensive cost analysis
         cost_analysis = cost_service.get_comprehensive_cost_analysis(days)

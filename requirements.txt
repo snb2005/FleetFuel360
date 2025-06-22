@@ -11,7 +11,7 @@ psycopg2-binary==2.9.7
 
 # Data Processing
 pandas==2.1.0
-numpy==1.24.3
+numpy<2.0.0==1.24.3
 
 # Machine Learning
 scikit-learn==1.3.0

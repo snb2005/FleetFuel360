@@ -333,13 +333,18 @@ class DemoDataGenerator:
                 ).first()
                 
                 if not existing:
-                    # Create simplified log for database
+                    # Create simplified log for database with correct field names
+                    # Convert miles to kilometers and gallons to liters
+                    km_driven = log_data['miles_driven'] * 1.60934
+                    fuel_used_liters = log_data['fuel_consumed'] * 3.78541
+                    
                     fuel_log = FuelLog(
                         vehicle_id=log_data['vehicle_id'],
                         timestamp=log_data['timestamp'],
-                        miles_driven=log_data['miles_driven'],
-                        fuel_consumed=log_data['fuel_consumed'],
-                        location=f"{log_data['location']['city']}, {log_data['location']['latitude']}, {log_data['location']['longitude']}"
+                        km_driven=round(km_driven, 2),
+                        fuel_used=round(fuel_used_liters, 2),
+                        is_anomaly=False,
+                        anomaly_score=0.0
                     )
                     self.session.add(fuel_log)
                     added_logs += 1
