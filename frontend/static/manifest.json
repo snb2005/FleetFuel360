@@ -1,0 +1,111 @@
+{
+  "name": "FleetFuel360 PWA",
+  "short_name": "FleetFuel360",
+  "description": "Advanced Fleet Fuel Analytics and Management Platform",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#2c3e50",
+  "background_color": "#ecf0f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["business", "productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "/static/screenshots/dashboard-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/static/screenshots/dashboard-mobile.png",
+      "sizes": "320x640",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View main analytics dashboard",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/static/icons/dashboard-shortcut.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Executive Dashboard",
+      "short_name": "Executive",
+      "description": "Executive analytics and reports",
+      "url": "/executive",
+      "icons": [
+        {
+          "src": "/static/icons/executive-shortcut.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Alerts",
+      "short_name": "Alerts",
+      "description": "View active alerts and notifications",
+      "url": "/alerts",
+      "icons": [
+        {
+          "src": "/static/icons/alerts-shortcut.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "web",
+      "url": "https://fleetfuel360.com"
+    }
+  ]
+}

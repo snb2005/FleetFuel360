@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-fuel-pump-fill me-2"></i>FleetFuel360
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/" aria-current="page">
+                            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="detectAnomalies()">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Detect Anomalies
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="navbar-text">
+                    <small class="text-light">
+                        <i class="bi bi-clock me-1"></i>{{ current_date }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-4">
+        <!-- Controls Row -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-sliders me-2"></i>Dashboard Controls
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="vehicleSelect" class="form-label">Vehicle</label>
+                                <select class="form-select" id="vehicleSelect" onchange="updateDashboard()">
+                                    <option value="all">All Vehicles</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label for="daysSelect" class="form-label">Time Period</label>
+                                <select class="form-select" id="daysSelect" onchange="updateDashboard()">
+                                    <option value="7" {{ 'selected' if days_back == 7 else '' }}>Last 7 Days</option>
+                                    <option value="14" {{ 'selected' if days_back == 14 else '' }}>Last 14 Days</option>
+                                    <option value="30" {{ 'selected' if days_back == 30 else '' }}>Last 30 Days</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label class="form-label">&nbsp;</label>
+                                <div>
+                                    <button class="btn btn-primary" onclick="refreshData()">
+                                        <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                                    </button>
+                                    <button class="btn btn-warning" onclick="detectAnomalies()">
+                                        <i class="bi bi-search me-1"></i>Detect Anomalies
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label class="form-label">Model Status</label>
+                                <div>
+                                    <span id="modelStatus" class="badge bg-secondary">Checking...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards Row -->
+        <div class="row mb-4" id="statsCards">
+            <!-- Cards will be populated by JavaScript -->
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-graph-up me-2"></i>Fuel Efficiency Timeline
+                    </div>
+                    <div class="card-body">
+                        <canvas id="efficiencyChart" height="100"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-bar-chart me-2"></i>Vehicle Comparison
+                    </div>
+                    <div class="card-body">
+                        <canvas id="comparisonChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Anomalies and Recent Data Row -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Recent Anomalies</span>
+                        <span id="anomalyCount" class="badge bg-warning">0</span>
+                    </div>
+                    <div class="card-body">
+                        <div id="anomaliesTable" class="table-responsive">
+                            <!-- Anomalies table will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-list-ul me-2"></i>Recent Fuel Logs
+                    </div>
+                    <div class="card-body">
+                        <div id="recentLogsTable" class="table-responsive">
+                            <!-- Recent logs table will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations Row -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-lightbulb me-2"></i>Recommendations
+                    </div>
+                    <div class="card-body">
+                        <div id="recommendationsContainer">
+                            <!-- Recommendations will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" style="display: none !important;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center py-4">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 id="loadingText">Loading dashboard data...</h5>
+                    <p class="text-muted mb-0">Please wait while we fetch the latest information.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+    
+    <!-- Initialize Dashboard -->
+    <script>
+        // Global configuration
+        const API_BASE_URL = '{{ api_base_url }}';
+        const SELECTED_VEHICLE = '{{ selected_vehicle }}';
+        const DAYS_BACK = {{ days_back }};
+        
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+        });
+    </script>
+</body>
+</html>
