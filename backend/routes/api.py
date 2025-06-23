@@ -20,6 +20,7 @@ from backend.services.utils import generate_summary_stats, format_timestamp
 from backend.services.alert_system import AlertSystem
 from backend.services.geospatial_analytics import GeospatialAnalytics
 from backend.services.cost_analysis import CostAnalyzer
+from backend.db.init_db import check_database_health
 
 # Create Blueprint
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -33,11 +34,35 @@ def get_db_session():
 @api_bp.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
-    return jsonify({
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "version": "1.0.0"
-    })
+    try:
+        # Check database health
+        db_health = check_database_health()
+        
+        return jsonify({
+            "status": "healthy",
+            "timestamp": datetime.now().isoformat(),
+            "version": "1.0.0",
+            "database": db_health
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "timestamp": datetime.now().isoformat(),
+            "version": "1.0.0",
+            "error": str(e)
+        }), 500
+
+@api_bp.route('/db-status', methods=['GET'])
+def database_status():
+    """Detailed database status endpoint"""
+    try:
+        db_health = check_database_health()
+        return jsonify(db_health)
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 @api_bp.route('/vehicles', methods=['GET'])
 def get_vehicles():

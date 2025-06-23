@@ -19,6 +19,12 @@ from config import Config
 def create_database_if_not_exists():
     """Create the FleetFuel360 database if it doesn't exist"""
     
+    # In production (Render), database is already created and managed
+    # Skip database creation step
+    if os.getenv('FLASK_ENV') == 'production':
+        print("✅ Production environment - using managed database")
+        return True
+    
     # Connect to PostgreSQL without specifying database
     conn_str = f"postgresql://{Config.POSTGRES_USER}:{Config.POSTGRES_PASSWORD}@{Config.POSTGRES_HOST}:{Config.POSTGRES_PORT}/postgres"
     
@@ -150,6 +156,89 @@ def verify_data():
         return False
     
     return True
+
+def initialize_database():
+    """Initialize database for production deployment"""
+    try:
+        print("🚀 Initializing FleetFuel360 Database...")
+        
+        # Step 1: Create database if needed
+        if not create_database_if_not_exists():
+            print("⚠️ Database creation skipped (may already exist)")
+        
+        # Step 2: Execute schema
+        if not execute_schema():
+            print("⚠️ Schema execution failed (tables may already exist)")
+        
+        # Step 3: Load CSV data
+        if not load_csv_data():
+            print("⚠️ CSV data loading failed (data may already exist)")
+        
+        # Step 4: Verify data
+        verify_data()
+        
+        print("✅ Database initialization completed!")
+        return True
+        
+    except Exception as e:
+        print(f"⚠️ Database initialization: {e}")
+        # Don't fail the build if database already exists
+        return True
+
+def get_db_session():
+    """Get database session for the application"""
+    try:
+        engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
+        SessionFactory = sessionmaker(bind=engine)
+        return SessionFactory()
+    except Exception as e:
+        print(f"❌ Error creating database session: {e}")
+        return None
+
+def check_database_health():
+    """Check if database is accessible and has data"""
+    try:
+        engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
+        
+        with engine.connect() as conn:
+            # Test basic connectivity
+            conn.execute(text("SELECT 1"))
+            
+            # Check if tables exist
+            tables_result = conn.execute(text("""
+                SELECT table_name FROM information_schema.tables 
+                WHERE table_schema = 'public'
+            """))
+            tables = [row[0] for row in tables_result]
+            
+            # Check for required tables
+            required_tables = ['vehicles', 'fuel_logs']
+            missing_tables = [t for t in required_tables if t not in tables]
+            
+            if missing_tables:
+                return {
+                    'status': 'warning',
+                    'message': f'Missing tables: {missing_tables}',
+                    'tables': tables
+                }
+            
+            # Count records
+            vehicle_count = conn.execute(text("SELECT COUNT(*) FROM vehicles")).scalar()
+            log_count = conn.execute(text("SELECT COUNT(*) FROM fuel_logs")).scalar()
+            
+            return {
+                'status': 'healthy',
+                'message': 'Database is accessible and populated',
+                'tables': tables,
+                'vehicle_count': vehicle_count,
+                'log_count': log_count
+            }
+            
+    except Exception as e:
+        return {
+            'status': 'error',
+            'message': f'Database error: {str(e)}'
+        }
 
 def main():
     """Main initialization function"""

@@ -33,7 +33,6 @@ services:
 
   - type: pserv
     name: fleetfuel360-db
-    env: postgresql
     plan: free
     databaseName: fleetfuel360
     databaseUser: fleetfuel_user
