@@ -620,30 +620,72 @@ def get_executive_summary():
         
         days_back = int(request.args.get('days_back', 30))
         
-        # Get basic statistics
-        stats = generate_summary_stats(session, days_back=days_back)
+        # Get fuel logs for the date range
+        from datetime import datetime, timedelta
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days_back)
+        fuel_logs = FuelLog.get_date_range(session, start_date, end_date)
+        logs_data = [log.to_dict() for log in fuel_logs]
         
-        # Get anomaly detection results
-        anomalies = analysis_service.detect_anomalies(days_back=days_back)
+        current_app.logger.info(f"Executive summary: Found {len(logs_data)} fuel logs for last {days_back} days")
+        
+        # Generate summary statistics
+        if logs_data:
+            import pandas as pd
+            df = pd.DataFrame(logs_data)
+            stats = generate_summary_stats(df)
+            current_app.logger.info(f"Executive summary stats: {stats}")
+        else:
+            stats = {
+                "status": "no_data", 
+                "total_records": 0, 
+                "efficiency_stats": {"mean": 0},
+                "totals": {"km_driven": 0, "fuel_used": 0, "avg_efficiency": 0},
+                "unique_vehicles": 0
+            }
+            current_app.logger.warning("Executive summary: No fuel logs found")
+        
+        # Get anomaly detection results (handle potential errors gracefully)
+        try:
+            anomalies = analysis_service.detect_anomalies(days_back=days_back)
+            current_app.logger.info(f"Executive summary: Found {len(anomalies.get('anomalies', []))} anomalies")
+        except Exception as e:
+            current_app.logger.error(f"Error getting anomalies: {e}")
+            anomalies = {'anomalies': []}
         
         # Get active alerts summary
-        alerts = alert_system.get_active_alerts()
+        try:
+            alerts = alert_system.get_active_alerts()
+            current_app.logger.info(f"Executive summary: Found {len(alerts)} active alerts")
+        except Exception as e:
+            current_app.logger.error(f"Error getting alerts: {e}")
+            alerts = []
+            
         alert_summary = {
-            'critical': len([a for a in alerts if a['severity'] == 'CRITICAL']),
-            'high': len([a for a in alerts if a['severity'] == 'HIGH']),
-            'medium': len([a for a in alerts if a['severity'] == 'MEDIUM']),
-            'low': len([a for a in alerts if a['severity'] == 'LOW']),
+            'critical': len([a for a in alerts if a.get('severity') == 'CRITICAL']),
+            'high': len([a for a in alerts if a.get('severity') == 'HIGH']),
+            'medium': len([a for a in alerts if a.get('severity') == 'MEDIUM']),
+            'low': len([a for a in alerts if a.get('severity') == 'LOW']),
             'total': len(alerts)
         }
         
-        # Get cost analysis summary
-        cost_analysis = cost_service.get_comprehensive_cost_analysis(days_back)
+        # Get cost analysis summary (handle potential errors gracefully)
+        try:
+            cost_analysis = cost_service.get_comprehensive_cost_analysis(days_back)
+            current_app.logger.info(f"Executive summary: Cost analysis completed")
+        except Exception as e:
+            current_app.logger.error(f"Error getting cost analysis: {e}")
+            cost_analysis = {
+                'total_costs': {'fuel_cost': 0},
+                'efficiency_metrics': {'cost_per_mile': 0},
+                'projections': {'monthly_fuel_cost': 0}
+            }
         
         # Calculate key performance indicators
         kpis = {
-            'fleet_efficiency': stats.get('average_efficiency', 0),
+            'fleet_efficiency': stats.get('efficiency_stats', {}).get('mean', 0) if stats.get('status') != 'no_data' else 0,
             'total_fuel_cost': cost_analysis.get('total_costs', {}).get('fuel_cost', 0),
-            'anomaly_rate': (len(anomalies.get('anomalies', [])) / max(stats.get('total_logs', 1), 1)) * 100,
+            'anomaly_rate': (len(anomalies.get('anomalies', [])) / max(stats.get('total_records', 1), 1)) * 100 if stats.get('status') != 'no_data' else 0,
             'alert_severity_score': (
                 alert_summary['critical'] * 4 + 
                 alert_summary['high'] * 3 + 
@@ -652,6 +694,8 @@ def get_executive_summary():
             ),
             'cost_per_mile': cost_analysis.get('efficiency_metrics', {}).get('cost_per_mile', 0)
         }
+        
+        current_app.logger.info(f"Executive summary KPIs: {kpis}")
         
         session.close()
         return jsonify({

@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: fleetfuel360
+    env: python
+    plan: free
+    buildCommand: ./build.sh
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 wsgi:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: fleetfuel360-db
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: fleetfuel360-db
+          property: port
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: fleetfuel360-db
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: fleetfuel360-db
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: fleetfuel360-db
+          property: password
+
+  - type: pserv
+    name: fleetfuel360-db
+    env: postgresql
+    plan: free
+    databaseName: fleetfuel360
+    databaseUser: fleetfuel_user

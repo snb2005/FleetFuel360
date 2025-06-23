@@ -326,7 +326,75 @@ curl -X POST http://localhost:5000/api/detect-anomalies \
 
 ## 🚀 Deployment
 
-### Production Setup
+### Render.com Deployment (Recommended)
+
+FleetFuel360 is pre-configured for easy deployment on Render.com with managed PostgreSQL.
+
+#### Prerequisites
+- GitHub account
+- Render.com account (free tier available)
+
+#### Step-by-Step Instructions
+
+1. **Push to GitHub**
+```bash
+# Initialize git repository (if not already done)
+git init
+git add .
+git commit -m "Initial FleetFuel360 deployment"
+
+# Create GitHub repository and push
+git remote add origin https://github.com/yourusername/FleetFuel360.git
+git push -u origin main
+```
+
+2. **Deploy on Render**
+   - Go to [https://dashboard.render.com/](https://dashboard.render.com/)
+   - Click "New +" → "Blueprint"
+   - Connect your GitHub repository
+   - Select the FleetFuel360 repository
+   - Render will automatically detect `render.yaml` and create:
+     - Web Service (Flask app)
+     - PostgreSQL Database (managed)
+
+3. **Configuration**
+   - Environment variables are automatically configured via `render.yaml`
+   - Database connection details are injected automatically
+   - Secret key is auto-generated for security
+
+4. **Access Your App**
+   - Your app will be available at: `https://your-service-name.onrender.com`
+   - Database initialization runs automatically during build
+   - Demo data is populated on first deployment
+
+#### Render Configuration Files
+
+The project includes these deployment files:
+
+- **`render.yaml`**: Service configuration with managed PostgreSQL
+- **`build.sh`**: Build script for dependency installation and DB setup
+- **`wsgi.py`**: Production WSGI entry point
+- **`Procfile`**: Alternative process configuration
+
+#### Environment Variables (Auto-configured)
+
+| Variable | Description | Source |
+|----------|-------------|---------|
+| `FLASK_ENV` | Set to `production` | render.yaml |
+| `SECRET_KEY` | Auto-generated secure key | Render |
+| `POSTGRES_*` | Database connection details | Managed PostgreSQL |
+
+#### Render Deployment Features
+
+✅ **Automatic HTTPS/TLS**  
+✅ **Managed PostgreSQL Database**  
+✅ **Auto-scaling and Load Balancing**  
+✅ **Continuous Deployment from Git**  
+✅ **Environment Variable Management**  
+✅ **Build Logs and Monitoring**  
+✅ **Free Tier Available**
+
+### Production Setup (Self-hosted)
 
 1. **Environment Configuration**
 ```bash
@@ -348,7 +416,7 @@ python backend/db/init_db.py
 ```bash
 # Using Gunicorn
 pip install gunicorn
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
+gunicorn -w 4 -b 0.0.0.0:5000 wsgi:app
 
 # Using systemd service
 sudo systemctl enable fleetfuel360

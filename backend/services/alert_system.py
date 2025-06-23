@@ -347,7 +347,7 @@ class AlertSystem:
             return alerts
         
         # Calculate recent efficiency
-        recent_efficiency = sum(log.miles_driven / log.fuel_consumed for log in recent_logs[-3:]) / min(3, len(recent_logs))
+        recent_efficiency = sum(log.km_driven / log.fuel_used for log in recent_logs[-3:]) / min(3, len(recent_logs))
         
         # Compare to vehicle average
         historical_efficiency = vehicle.average_efficiency or 10.0

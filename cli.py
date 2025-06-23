@@ -106,8 +106,19 @@ def status(ctx, format):
         
         # Get system statistics
         try:
-            from backend.services.utils import generate_summary_stats
-            stats = generate_summary_stats(cli_obj.db_session)
+            from backend.models.fuel_log import FuelLog
+            import pandas as pd
+            from datetime import datetime, timedelta
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=30)  # Default to 30 days for status
+            fuel_logs = FuelLog.get_date_range(cli_obj.db_session, start_date, end_date)
+            logs_data = [log.to_dict() for log in fuel_logs]
+            if logs_data:
+                df = pd.DataFrame(logs_data)
+                from backend.services.utils import generate_summary_stats
+                stats = generate_summary_stats(df)
+            else:
+                stats = {"status": "no_data", "total_logs": 0, "average_efficiency": 0}
             
             status_data = {
                 'API Status': 'Healthy',
@@ -430,8 +441,19 @@ def monitor(ctx, vehicle, interval):
                 click.echo(f"{Fore.GREEN}✓ No active alerts")
             
             # Get fleet statistics
-            from backend.services.utils import generate_summary_stats
-            stats = generate_summary_stats(cli_obj.db_session, days_back=1)
+            from backend.models.fuel_log import FuelLog
+            import pandas as pd
+            from datetime import datetime, timedelta
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=1)  # 1 day for monitoring
+            fuel_logs = FuelLog.get_date_range(cli_obj.db_session, start_date, end_date)
+            logs_data = [log.to_dict() for log in fuel_logs]
+            if logs_data:
+                df = pd.DataFrame(logs_data)
+                from backend.services.utils import generate_summary_stats
+                stats = generate_summary_stats(df)
+            else:
+                stats = {"status": "no_data", "total_logs": 0, "average_efficiency": 0}
             
             click.echo(f"\n{Fore.CYAN}Fleet Status:")
             click.echo(f"  • Active Vehicles: {stats.get('total_vehicles', 0)}")

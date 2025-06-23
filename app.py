@@ -107,45 +107,22 @@ def create_app(config_name='development'):
     # Initialize real-time monitoring after app setup
     def initialize_realtime():
         """Initialize real-time services"""
-        realtime_service.start_monitoring()
-        
-        # Start demo event simulation in development
-        if app.config.get('DEBUG', False):
-            simulate_real_time_events(realtime_service)
+        if not hasattr(app, '_realtime_initialized'):
+            realtime_service.start_monitoring()
+            app._realtime_initialized = True
+            
+            # Start demo event simulation in development
+            if app.config.get('DEBUG', False):
+                simulate_real_time_events(realtime_service)
     
-    # Schedule initialization to run after first request
-    app.before_request_funcs.setdefault(None, []).append(
-        lambda: initialize_realtime() if not hasattr(app, '_realtime_initialized') else None
-    )
+    # Schedule initialization to run after first request using new Flask pattern
+    @app.before_request
+    def setup_realtime():
+        if not hasattr(app, '_realtime_initialized'):
+            initialize_realtime()
     
     # Store realtime service in app context for access
     app.realtime_service = realtime_service
-    
-    return app
-    
-    # Load configuration
-    app.config.from_object(config[config_name])
-    
-    # Enable CORS for API endpoints
-    CORS(app, origins=['http://localhost:5000', 'http://127.0.0.1:5000'])
-    
-    # Register blueprints
-    app.register_blueprint(api_bp)
-    app.register_blueprint(dashboard_bp)
-    
-    # Favicon route
-    @app.route('/favicon.ico')
-    def favicon():
-        return app.send_static_file('favicon.ico')
-    
-    # Error handlers
-    @app.errorhandler(404)
-    def not_found_error(error):
-        return render_template('dashboard.html'), 404
-    
-    @app.errorhandler(500)
-    def internal_error(error):
-        return render_template('dashboard.html'), 500
     
     return app
 

@@ -200,13 +200,14 @@ class FuelAnalysisService:
             print(f"❌ Error in fuel efficiency analysis: {e}")
             return {"status": "error", "message": str(e)}
     
-    def detect_anomalies(self, vehicle_id=None, update_db=True):
+    def detect_anomalies(self, vehicle_id=None, update_db=True, days_back=7):
         """
         Detect anomalies in fuel data
         
         Args:
             vehicle_id (str): Specific vehicle ID (optional)
             update_db (bool): Whether to update database with results
+            days_back (int): Number of days to look back for data
             
         Returns:
             dict: Anomaly detection results
@@ -219,7 +220,7 @@ class FuelAnalysisService:
             
             # Get recent data
             end_date = datetime.now()
-            start_date = end_date - timedelta(days=7)  # Last week
+            start_date = end_date - timedelta(days=days_back)
             
             if vehicle_id:
                 fuel_logs = FuelLog.get_by_vehicle(self.db_session, vehicle_id)
@@ -442,6 +443,47 @@ class FuelAnalysisService:
         
         return recommendations
     
+    def get_recent_efficiency_data(self, days_back=7):
+        """
+        Get recent fuel efficiency data for real-time updates
+        
+        Args:
+            days_back (int): Number of days to look back
+            
+        Returns:
+            dict: Recent efficiency data summary
+        """
+        try:
+            # Get recent fuel logs
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=days_back)
+            fuel_logs = FuelLog.get_date_range(self.db_session, start_date, end_date)
+            
+            if not fuel_logs:
+                return None
+            
+            # Convert to DataFrame and generate stats
+            logs_data = [log.to_dict() for log in fuel_logs]
+            df = pd.DataFrame(logs_data)
+            
+            # Calculate recent efficiency metrics
+            recent_avg_efficiency = df['fuel_efficiency'].mean() if 'fuel_efficiency' in df.columns else 0
+            efficiency_trend = self.calculate_efficiency_trends(df)
+            
+            return {
+                'average_efficiency': round(recent_avg_efficiency, 2),
+                'total_logs': len(fuel_logs),
+                'date_range': {
+                    'start': start_date.isoformat(),
+                    'end': end_date.isoformat()
+                },
+                'trend': efficiency_trend.get('trend_direction', 'stable') if efficiency_trend else 'stable'
+            }
+            
+        except Exception as e:
+            print(f"Error getting recent efficiency data: {e}")
+            return None
+
     def get_model_status(self):
         """
         Get current model status and information

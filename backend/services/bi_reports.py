@@ -182,8 +182,19 @@ class BusinessIntelligenceReports:
     
     def _get_fleet_statistics(self, days_back):
         """Get comprehensive fleet statistics"""
-        from backend.services.utils import generate_summary_stats
-        return generate_summary_stats(self.session, days_back=days_back)
+        from backend.models.fuel_log import FuelLog
+        import pandas as pd
+        from datetime import datetime, timedelta
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days_back)
+        fuel_logs = FuelLog.get_date_range(self.session, start_date, end_date)
+        logs_data = [log.to_dict() for log in fuel_logs]
+        if logs_data:
+            df = pd.DataFrame(logs_data)
+            from backend.services.utils import generate_summary_stats
+            return generate_summary_stats(df)
+        else:
+            return {"status": "no_data", "total_logs": 0, "average_efficiency": 0}
     
     def _get_alerts_summary(self):
         """Get summary of alerts by severity"""
