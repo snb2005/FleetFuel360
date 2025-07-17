@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: fleetfuel360_db
+    environment:
+      MYSQL_ROOT_PASSWORD: fleetfuel360_password
+      MYSQL_DATABASE: fleetfuel360
+      MYSQL_USER: fleetfuel360_user
+      MYSQL_PASSWORD: fleetfuel360_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - fleetfuel360_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  app:
+    build: .
+    container_name: fleetfuel360_app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_USER: fleetfuel360_user
+      DB_PASSWORD: fleetfuel360_password
+      DB_NAME: fleetfuel360
+      FLASK_ENV: production
+    ports:
+      - "5000:5000"
+    networks:
+      - fleetfuel360_network
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+
+networks:
+  fleetfuel360_network:
+    driver: bridge
