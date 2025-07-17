@@ -515,10 +515,5 @@ This project is designed for educational purposes. Feel free to:
 - Add unit tests
 - Enhance documentation
 
-## 📝 License
-
-This project is open source and available under the MIT License.
-
----
 
 **Note**: This is a simplified educational project. For production use, implement proper security measures, input validation, authentication, and error handling.
